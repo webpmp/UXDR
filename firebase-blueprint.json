@@ -1,0 +1,85 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "A user in the UXDR system.",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "format": "email" },
+        "name": { "type": "string" },
+        "role": { "type": "string", "enum": ["Admin", "Facilitator", "Reviewer", "Requestor", "Participant", "Watcher", "Guest"] },
+        "availability": {
+          "type": "array",
+          "description": "List of unavailable dates for Reviewers"
+        }
+      },
+      "required": ["email", "name", "role"]
+    },
+    "Project": {
+      "title": "Project",
+      "description": "UX Design Review Project",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "status": { "type": "string", "enum": ["Intake", "Discovery", "Design", "Follow-up", "Fit & Finish", "Approved", "Approved-Changes Required"] },
+        "requestorId": { "type": "string" },
+        "disclosureRequired": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "timeline": { "type": "string" },
+        "priorWorkLink": { "type": "string" }
+      },
+      "required": ["title", "status", "requestorId", "disclosureRequired", "createdAt"]
+    },
+    "ReviewStage": {
+      "title": "Review Stage",
+      "description": "A review stage within a project",
+      "type": "object",
+      "properties": {
+        "projectId": { "type": "string" },
+        "stageType": { "type": "string", "enum": ["Discovery", "Design", "Follow-up", "Fit & Finish"] },
+        "status": { "type": "string", "enum": ["Pending", "Scheduled", "Completed"] },
+        "facilitatorId": { "type": "string" },
+        "reviewerIds": { "type": "array" },
+        "scheduledTime": { "type": "string", "format": "date-time" },
+        "recordingLink": { "type": "string" },
+        "externalSurveyLink": { "type": "string" }
+      },
+      "required": ["projectId", "stageType", "status"]
+    },
+    "Feedback": {
+      "title": "Feedback Item",
+      "description": "Structured feedback for a review",
+      "type": "object",
+      "properties": {
+        "reviewId": { "type": "string" },
+        "projectId": { "type": "string" },
+        "authorId": { "type": "string" },
+        "screenName": { "type": "string" },
+        "screenshotUrl": { "type": "string" },
+        "notes": { "type": "string" },
+        "status": { "type": "string", "enum": ["Open", "Addressed", "Ignored"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["reviewId", "projectId", "authorId", "status", "createdAt"]
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "Stores user profiles with their roles."
+    },
+    "projects/{projectId}": {
+      "schema": { "$ref": "#/entities/Project" },
+      "description": "Stores UXDR projects and their current workflow state."
+    },
+    "reviews/{reviewId}": {
+      "schema": { "$ref": "#/entities/ReviewStage" },
+      "description": "Stores individual review stages for a project."
+    },
+    "feedback/{feedbackId}": {
+      "schema": { "$ref": "#/entities/Feedback" },
+      "description": "Stores individual feedback items grouped by review stage."
+    }
+  }
+}
