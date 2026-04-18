@@ -4,11 +4,53 @@
 
 A web application for managing the UX Design Review (UXDR) lifecycle end to end. The system tracks projects across defined design phases, enforces role-based workflows, manages participant availability, and maintains a structured audit trail of decisions and milestones. Recent updates expand project visibility controls, improve user–project associations, and add admin tooling for testing and data seeding.
 
-![Dashboard](https://raw.githubusercontent.com/webpmp/webpmp.github.io/master/dashboard.png)
-![Calendar](https://raw.githubusercontent.com/webpmp/webpmp.github.io/master/calendar.png)
-![Projects](https://raw.githubusercontent.com/webpmp/webpmp.github.io/master/projects.png)
-![User Management](https://raw.githubusercontent.com/webpmp/webpmp.github.io/master/user-management.png)
-![System Settings](https://raw.githubusercontent.com/webpmp/webpmp.github.io/master/settings.png)
+<table>
+
+  <tr>
+
+    <td align="center">
+
+      <img src="https://raw.githubusercontent.com/webpmp/webpmp.github.io/master/dashboard.png" width="150"><br>
+
+      <sub>Dashboard</sub>
+
+    </td>
+
+    <td align="center">
+
+      <img src="https://raw.githubusercontent.com/webpmp/webpmp.github.io/master/calendar.png" width="150"><br>
+
+      <sub>Calendar</sub>
+
+    </td>
+
+    <td align="center">
+
+      <img src="https://raw.githubusercontent.com/webpmp/webpmp.github.io/master/projects.png" width="150"><br>
+
+      <sub>Projects</sub>
+
+    </td>
+
+    <td align="center">
+
+      <img src="https://raw.githubusercontent.com/webpmp/webpmp.github.io/master/user-management.png" width="150"><br>
+
+      <sub>User Management</sub>
+
+    </td>
+
+    <td align="center">
+
+      <img src="https://raw.githubusercontent.com/webpmp/webpmp.github.io/master/settings.png" width="150"><br>
+
+      <sub>System Settings</sub>
+
+    </td>
+
+  </tr>
+
+</table>
 
 ## Key Features
 
