@@ -1,9 +1,9 @@
 <img src="https://github.com/webpmp/webpmp.github.io/blob/master/uxdr-cover-v2.png" alt="UXDR" style="max-width: 100%;"></a>
-<img src="https://github.com/webpmp/webpmp.github.io/blob/master/dashboard.png" alt="Dashboard" style="max-width: 20%;"></a>
-<img src="https://github.com/webpmp/webpmp.github.io/blob/master/calendar.png" alt="Calendar" style="max-width: 20%;"></a>
-<img src="https://github.com/webpmp/webpmp.github.io/blob/master/projects.png" alt="Projects" style="max-width: 20%;"></a>
-<img src="https://github.com/webpmp/webpmp.github.io/blob/master/user-management.png" alt="User Management" style="max-width: 20%;"></a>
-<img src="https://github.com/webpmp/webpmp.github.io/blob/master/settings.png" alt="System Settings" style="max-width: 20%;"></a>
+<img src="https://github.com/webpmp/webpmp.github.io/blob/master/dashboard.png" alt="Dashboard" style="width: 20%;"></a>
+<img src="https://github.com/webpmp/webpmp.github.io/blob/master/calendar.png" alt="Calendar" style="width: 20%;"></a>
+<img src="https://github.com/webpmp/webpmp.github.io/blob/master/projects.png" alt="Projects" style="width: 20%;"></a>
+<img src="https://github.com/webpmp/webpmp.github.io/blob/master/user-management.png" alt="User Management" style="width: 20%;"></a>
+<img src="https://github.com/webpmp/webpmp.github.io/blob/master/settings.png" alt="System Settings" style="width: 20%;"></a>
 
 # UX Design Review (UXDR)
 
