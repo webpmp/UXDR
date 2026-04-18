@@ -3,7 +3,7 @@
 # UX Design Review (UXDR)
 
 A web application for managing the UX Design Review (UXDR) lifecycle end to end. The system tracks projects across defined design phases, enforces role-based workflows, manages participant availability, and maintains a structured audit trail of decisions and milestones. Recent updates expand project visibility controls, improve user–project associations, and add admin tooling for testing and data seeding.
-
+<br>
 <table>
   <tr>
     <td align="center">
@@ -28,7 +28,7 @@ A web application for managing the UX Design Review (UXDR) lifecycle end to end.
     </td>
   </tr>
 </table>
-
+<br>
 
 ## Key Features
 
