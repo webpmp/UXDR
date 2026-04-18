@@ -4,55 +4,49 @@
 
 A web application for managing the UX Design Review (UXDR) lifecycle end to end. The system tracks projects across defined design phases, enforces role-based workflows, manages participant availability, and maintains a structured audit trail of decisions and milestones. Recent updates expand project visibility controls, improve user–project associations, and add admin tooling for testing and data seeding.
 
-<!-- Dashboard -->
+<div style="display:flex; gap:20px; flex-wrap:wrap;">
 
-<figure>
+  <figure style="text-align:center;">
 
-  <img src="https://github.com/webpmp/webpmp.github.io/blob/master/dashboard.png" alt="Dashboard" style="width:20%;">
+    <img src="https://github.com/webpmp/webpmp.github.io/blob/master/dashboard.png" alt="Dashboard" style="width:150px;">
 
-  <figcaption>Dashboard</figcaption>
+    <figcaption>Dashboard</figcaption>
 
-</figure>
+  </figure>
 
-<!-- Calendar -->
+  <figure style="text-align:center;">
 
-<figure>
+    <img src="https://github.com/webpmp/webpmp.github.io/blob/master/calendar.png" alt="Calendar" style="width:150px;">
 
-  <img src="https://github.com/webpmp/webpmp.github.io/blob/master/calendar.png" alt="Calendar" style="width:20%;">
+    <figcaption>Calendar</figcaption>
 
-  <figcaption>Calendar</figcaption>
+  </figure>
 
-</figure>
+  <figure style="text-align:center;">
 
-<!-- Projects -->
+    <img src="https://github.com/webpmp/webpmp.github.io/blob/master/projects.png" alt="Projects" style="width:150px;">
 
-<figure>
+    <figcaption>Projects</figcaption>
 
-  <img src="https://github.com/webpmp/webpmp.github.io/blob/master/projects.png" alt="Projects" style="width:20%;">
+  </figure>
 
-  <figcaption>Projects</figcaption>
+  <figure style="text-align:center;">
 
-</figure>
+    <img src="https://github.com/webpmp/webpmp.github.io/blob/master/user-management.png" alt="User Management" style="width:150px;">
 
-<!-- User Management -->
+    <figcaption>User Management</figcaption>
 
-<figure>
+  </figure>
 
-  <img src="https://github.com/webpmp/webpmp.github.io/blob/master/user-management.png" alt="User Management" style="width:20%;">
+  <figure style="text-align:center;">
 
-  <figcaption>User Management</figcaption>
+    <img src="https://github.com/webpmp/webpmp.github.io/blob/master/settings.png" alt="System Settings" style="width:150px;">
 
-</figure>
+    <figcaption>System Settings</figcaption>
 
-<!-- System Settings -->
+  </figure>
 
-<figure>
-
-  <img src="https://github.com/webpmp/webpmp.github.io/blob/master/settings.png" alt="System Settings" style="width:20%;">
-
-  <figcaption>System Settings</figcaption>
-
-</figure>
+</div>
 
 ## Key Features
 
