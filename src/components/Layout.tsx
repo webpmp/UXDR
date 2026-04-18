@@ -1,12 +1,24 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { Navigate, Outlet, Link, useLocation } from 'react-router-dom';
-import { LogOut, LayoutDashboard, Calendar, Search, Users, Shield, Briefcase, FileText } from 'lucide-react';
+import { LogOut, LayoutDashboard, Calendar, Search, Users, Shield, Briefcase, FileText, ChevronUp, RotateCcw } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 export const Layout = () => {
-  const { user, profile, loading, signOut } = useAuth();
+  const { user, profile, loading, signOut, testRole, setTestRole, originalRole } = useAuth();
   const location = useLocation();
+  const [showRoleSwitcher, setShowRoleSwitcher] = useState(false);
+  const switcherRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (switcherRef.current && !switcherRef.current.contains(event.target as Node)) {
+        setShowRoleSwitcher(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   if (loading) {
     return <div className="min-h-screen flex items-center justify-center bg-[#0A0A0A] text-[#FFFFFF] font-mono">Loading Sandbox...</div>;
@@ -17,16 +29,21 @@ export const Layout = () => {
   }
 
   const role = profile.role;
+  const isTesting = !!testRole;
 
   const links = [
     { to: "/", label: "Dashboard", icon: LayoutDashboard, roles: ["Admin", "Facilitator", "Reviewer", "Requestor", "Watcher", "Participant", "Guest"] },
-    { to: "/search", label: "Search", icon: Search, roles: ["Admin", "Facilitator", "Reviewer", "Requestor", "Watcher", "Participant", "Guest"] },
-    { to: "/calendar", label: "Calendar", icon: Calendar, roles: ["Admin", "Facilitator", "Reviewer"] },
+    { to: "/calendar", label: "Calendar", icon: Calendar, roles: ["Admin", "Facilitator", "Reviewer", "Requestor", "Watcher", "Participant", "Guest"] },
     { to: "/projects", label: "Projects", icon: Briefcase, roles: ["Requestor", "Facilitator", "Participant", "Reviewer", "Watcher", "Admin"] },
     { to: "/users", label: "User Management", icon: Users, roles: ["Admin"] },
+    { to: "/settings", label: "Settings", icon: Shield, roles: ["Admin"] },
   ];
 
   const filteredLinks = links.filter(link => link.roles.includes(role));
+
+  const roles: ("Admin" | "Facilitator" | "Reviewer" | "Requestor" | "Participant" | "Watcher" | "Guest")[] = [
+    "Admin", "Facilitator", "Reviewer", "Requestor", "Participant", "Watcher", "Guest"
+  ];
 
   return (
     <div className="flex h-screen bg-[#0A0A0A] font-sans text-[#FFFFFF]">
@@ -58,13 +75,62 @@ export const Layout = () => {
           ))}
         </nav>
 
-        <div className="p-4 border-t border-[#262626]">
+        <div className="p-4 border-t border-[#262626] relative" ref={switcherRef}>
           <div className="mb-4">
             <p className="font-bold text-sm truncate">{profile.name}</p>
             <p className="text-[11px] text-[#999999] truncate">{profile.email}</p>
-            <span className="inline-block px-2 py-1 mt-2 bg-[#FF3D00] text-white text-[11px] font-bold uppercase rounded-sm tracking-tight">
-              {role}
-            </span>
+            <div className="flex items-center gap-2 mt-2">
+              <span className={cn(
+                "inline-block px-2 py-1 bg-[#FF3D00] text-white text-[11px] font-bold uppercase rounded-sm tracking-tight",
+                isTesting && "bg-[#555555] border border-[#FF3D00]"
+              )}>
+                {role} {isTesting && "(Testing)"}
+              </span>
+              
+              {/* Testing role switcher - only show in dev */}
+              {process.env.NODE_ENV !== 'production' && (
+                <button 
+                  onClick={() => setShowRoleSwitcher(!showRoleSwitcher)}
+                  className="p-1 hover:bg-[#262626] rounded-sm transition-colors text-[#999999] hover:text-white"
+                >
+                  <ChevronUp className={cn("w-3 h-3 transition-transform", showRoleSwitcher && "rotate-180")} />
+                </button>
+              )}
+            </div>
+
+            {showRoleSwitcher && (
+              <div className="absolute bottom-full left-4 mb-2 w-56 bg-[#141414] border border-[#262626] rounded shadow-2xl z-50 overflow-hidden animate-in fade-in slide-in-from-bottom-2">
+                <div className="p-2 border-b border-[#262626]">
+                  <button 
+                    onClick={() => {
+                      setTestRole(null);
+                      setShowRoleSwitcher(false);
+                    }}
+                    className="w-full flex items-center gap-2 px-3 py-2 text-[11px] font-bold uppercase tracking-wider text-[#999999] hover:text-white hover:bg-[#262626] rounded transition-colors"
+                  >
+                    <RotateCcw className="w-3 h-3" />
+                    Reset to {originalRole}
+                  </button>
+                </div>
+                <div className="max-h-48 overflow-y-auto py-1 custom-scrollbar">
+                  {roles.map(r => (
+                    <button
+                      key={r}
+                      onClick={() => {
+                        setTestRole(r);
+                        setShowRoleSwitcher(false);
+                      }}
+                      className={cn(
+                        "w-full text-left px-4 py-2 text-[12px] font-medium transition-colors hover:bg-[#262626]",
+                        role === r ? "text-[#FF3D00] bg-[#1A1A1A]" : "text-[#999999]"
+                      )}
+                    >
+                      {r}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
           <button 
             onClick={signOut}

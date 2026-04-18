@@ -7,12 +7,15 @@ import { Login } from './pages/Login';
 import { Dashboard } from './pages/Dashboard';
 import { GlobalSearch } from './pages/GlobalSearch';
 import { UserManagement } from './pages/UserManagement';
+import { Settings } from './pages/Settings';
 import { ProjectsList } from './pages/ProjectsList';
 import { ProjectNew } from './pages/ProjectNew';
 import { ProjectDetails } from './pages/ProjectDetails';
 import { ReviewBoard } from './pages/ReviewBoard';
 import { CalendarPage } from './pages/CalendarPage';
 import { ExternalSurvey } from './pages/ExternalSurvey';
+import { UserProfile } from './pages/UserProfile';
+import { Tasks } from './pages/Tasks';
 
 export default function App() {
   return (
@@ -26,11 +29,14 @@ export default function App() {
                <Route index element={<Dashboard />} />
                <Route path="search" element={<GlobalSearch />} />
                <Route path="users" element={<UserManagement />} />
+               <Route path="settings" element={<Settings />} />
+               <Route path="users/:userId" element={<UserProfile />} />
                <Route path="calendar" element={<CalendarPage />} />
                <Route path="projects" element={<ProjectsList />} />
                <Route path="projects/new" element={<ProjectNew />} />
                <Route path="projects/:id" element={<ProjectDetails />} />
                <Route path="projects/:id/reviews/:reviewId" element={<ReviewBoard />} />
+               <Route path="tasks" element={<Tasks />} />
                {/* Other routes will be added here */}
                <Route path="*" element={<div className="p-8 font-mono">404 Not Found</div>} />
             </Route>

@@ -6,6 +6,7 @@ import { useAuth, AvailabilityBlock } from '../contexts/AuthContext';
 import { Calendar as CalendarIcon, Save, ChevronLeft, ChevronRight, Copy } from 'lucide-react';
 import { format, addDays, startOfWeek, isSameDay, subWeeks, addWeeks, parseISO, isSameWeek } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
+import { QuickSearch } from '../components/QuickSearch';
 
 export const CalendarPage = () => {
     const { profile, user } = useAuth();
@@ -19,11 +20,28 @@ export const CalendarPage = () => {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
 
-    const hours = Array.from({ length: 11 }, (_, i) => i + 8); // 8 AM to 6 PM
+    // Global Settings
+    const [calendarSettings, setCalendarSettings] = useState({
+        showWeekends: false,
+        workingHoursStart: '08:00',
+        workingHoursEnd: '18:00'
+    });
+    const [holidays, setHolidays] = useState<any[]>([]);
+
+    const startHr = parseInt(calendarSettings.workingHoursStart?.split(':')[0] || '8');
+    const endHr = parseInt(calendarSettings.workingHoursEnd?.split(':')[0] || '18');
+    const hours = Array.from({ length: Math.max(1, endHr - startHr + 1) }, (_, i) => i + startHr);
 
     useEffect(() => {
         if (!profile || !user) return;
         
+        const canSeeProject = (p: any) => {
+            if (profile?.role === 'Admin') return true;
+            if (!p.disclosureRequired) return true;
+            if (!profile?.email) return false;
+            return p.members?.some((m: any) => m.email.toLowerCase() === profile.email.toLowerCase());
+        };
+
         let initialAvail = profile.availability || [];
         // Apply default logic if totally empty
         if (initialAvail.length === 0) {
@@ -42,19 +60,28 @@ export const CalendarPage = () => {
 
         const fetchData = async () => {
             try {
+                // Fetch Global Settings
+                const calSnap = await getDocs(query(collection(db, 'system_settings')));
+                const calDoc = calSnap.docs.find(d => d.id === 'calendar');
+                if (calDoc) setCalendarSettings(calDoc.data() as any);
+
+                // Fetch Holidays
+                const holSnap = await getDocs(collection(db, 'holidays'));
+                setHolidays(holSnap.docs.map(d => d.data()));
+
                 // Fetch projects the user can see
                 let projQuery = query(collection(db, 'projects'));
-                if (profile.role === 'Requestor') {
-                    projQuery = query(collection(db, 'projects'), where('requestorId', '==', user.uid));
-                }
                 const projSnap = await getDocs(projQuery);
                 const projMap: Record<string, any> = {};
                 projSnap.docs.forEach(d => {
-                    projMap[d.id] = { id: d.id, ...d.data() };
+                    const p = { id: d.id, ...d.data() };
+                    if (canSeeProject(p)) {
+                        projMap[d.id] = p;
+                    }
                 });
                 setProjects(projMap);
 
-                // Fetch all reviews and filter locally for Requestors if needed based on project visibility
+                // Fetch all reviews and filter locally based on project visibility
                 const revSnap = await getDocs(query(collection(db, 'reviews')));
                 let mappedReviews: any[] = revSnap.docs.map(d => ({id: d.id, ...d.data()}));
                 
@@ -103,11 +130,11 @@ export const CalendarPage = () => {
                     }
                 }
 
-                // Filter properly for requestors 
-                if (profile.role === 'Requestor') {
-                    mappedReviews = mappedReviews.filter(r => projMap[r.projectId]);
-                } else if (profile.role === 'Guest') {
-                     mappedReviews = []; // Guests don't see reviews on calendar
+                // Filter reviews locally for what user can see
+                mappedReviews = mappedReviews.filter(r => projMap[r.projectId]);
+                
+                if (profile.role === 'Guest') {
+                    mappedReviews = []; // Guests don't see reviews on calendar
                 }
                 
                 setReviews(mappedReviews);
@@ -172,10 +199,19 @@ export const CalendarPage = () => {
 
     if (loading) return <div className="p-8 font-mono text-[#999999]">Loading Dual Calendar...</div>;
 
-    const days = Array.from({ length: 7 }).map((_, i) => addDays(currentWeekStart, i));
+    const allDays = Array.from({ length: 7 }).map((_, i) => addDays(currentWeekStart, i));
+    const days = allDays.filter(d => {
+        if (calendarSettings.showWeekends) return true;
+        const dow = d.getDay();
+        return dow !== 0 && dow !== 6;
+    });
 
     // Get block status
     const getBlockStatus = (dateStr: string, hour: number) => {
+        // Check Corporate Holidays first
+        const isHoliday = holidays.some(h => h.date === dateStr);
+        if (isHoliday) return false;
+
         const block = availability.find(a => a.date === dateStr && a.hour === hour);
         if (block) return block.available;
         const d = parseISO(dateStr);
@@ -187,14 +223,15 @@ export const CalendarPage = () => {
     const weeklyReviews = reviews.filter(r => r.scheduledTime && r.status === 'Scheduled');
 
     return (
-        <div className="p-8 max-w-6xl mx-auto space-y-6">
+        <div className="p-8 max-w-6xl mx-auto space-y-12">
+            <div className="flex justify-start">
+                <QuickSearch />
+            </div>
+
             <header className="flex justify-between items-end border-b border-[#262626] pb-6">
                 <div>
-                    <h1 className="text-3xl font-sans font-bold flex items-center gap-2 mb-2">
-                        <CalendarIcon className="w-8 h-8 text-[#FF3D00]" /> 
-                        Calendar
-                    </h1>
-                    <p className="text-[#999999] text-sm">Manage availability and view scheduled UX reviews.</p>
+                   <h1 className="mb-2">Availability & Schedule</h1>
+                   <p className="text-[#999999] text-sm">Manage system availability and view scheduled reviews.</p>
                 </div>
                 <div className="flex gap-3">
                     <button onClick={copyPreviousWeek} className="border border-[#262626] text-[#999999] bg-[#141414] px-4 py-3 font-bold uppercase text-[11px] tracking-wider flex items-center gap-2 hover:text-white transition-colors rounded-sm">
@@ -223,19 +260,30 @@ export const CalendarPage = () => {
             </div>
 
             <div className="relative border border-[#262626] bg-[#0A0A0A] overflow-x-auto">
-                <div className="grid grid-cols-8 divide-x divide-[#262626] min-w-[800px]">
+                <div 
+                    className="grid divide-x divide-[#262626] min-w-[800px]"
+                    style={{ gridTemplateColumns: `100px repeat(${days.length}, 1fr)` }}
+                >
                     {/* Header Row */}
                     <div className="h-12 bg-[#141414]"></div>
                     {days.map(day => {
                         const isToday = isSameDay(day, new Date());
+                        const dateStr = format(day, 'yyyy-MM-dd');
+                        const holiday = holidays.find(h => h.date === dateStr);
+                        
                         return (
-                            <div key={day.toISOString()} className="h-12 bg-[#141414] flex flex-col items-center justify-center border-b border-[#262626]">
+                            <div key={day.toISOString()} className="h-12 bg-[#141414] flex flex-col items-center justify-center border-b border-[#262626] relative">
                                 <span className={`text-[11px] font-bold uppercase tracking-widest ${isToday ? 'text-[#FF3D00]' : 'text-[#999999]'}`}>
                                     {format(day, 'EEE')}
                                 </span>
                                 <span className={`text-sm ${isToday ? 'text-white font-bold' : 'text-[#999999]'}`}>
                                     {format(day, 'd')}
                                 </span>
+                                {holiday && (
+                                    <div className="absolute top-0 right-0 p-1">
+                                        <div className="w-2 h-2 rounded-full bg-[#FF3D00]" title={`Holiday: ${holiday.name}`}></div>
+                                    </div>
+                                )}
                             </div>
                         )
                     })}
@@ -263,12 +311,20 @@ export const CalendarPage = () => {
                                 return (
                                     <div key={`${dateStr}-${hour}`} className="h-16 border-b border-[#262626] relative group">
                                         <div 
-                                            onClick={() => toggleAvailability(dateStr, hour)}
+                                            onClick={() => !holidays.some(h => h.date === dateStr) && toggleAvailability(dateStr, hour)}
                                             className={`absolute inset-0 m-[1px] rounded transition-colors cursor-pointer border border-transparent 
-                                            ${isAvailable ? 'hover:bg-[#1A1A1A]' : 'bg-[#FF3D00]/10 border-[#FF3D00]/30 hover:bg-[#FF3D00]/20'}`}
-                                            title={isAvailable ? "Available (Click to mark Not Available)" : "Not Available (Click to mark Available)"}
+                                            ${isAvailable ? 'hover:bg-[#1A1A1A]' : 'bg-[#FF3D00]/10 border-[#FF3D00]/30 hover:bg-[#FF3D00]/20'}
+                                            ${holidays.some(h => h.date === dateStr) ? 'cursor-not-allowed bg-[#FF3D00]/5 border-dashed border-[#FF3D00]/20' : ''}`}
+                                            title={holidays.some(h => h.date === dateStr) 
+                                                ? `Holiday: ${holidays.find(h => h.date === dateStr)?.name}`
+                                                : (isAvailable ? "Available (Click to mark Not Available)" : "Not Available (Click to mark Available)")}
                                         >
-                                            {!isAvailable && <div className="absolute top-1 left-1 text-[#FF3D00] text-[9px] font-bold uppercase tracking-tighter mix-blend-screen opacity-50">N/A</div>}
+                                            {!isAvailable && !holidays.some(h => h.date === dateStr) && <div className="absolute top-1 left-1 text-[#FF3D00] text-[9px] font-bold uppercase tracking-tighter mix-blend-screen opacity-50">N/A</div>}
+                                            {holidays.some(h => h.date === dateStr) && (
+                                                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                                    <span className="text-[10px] font-mono text-[#FF3D00] uppercase tracking-widest rotate-12 opacity-30">Blocked</span>
+                                                </div>
+                                            )}
                                         </div>
 
                                         {/* Scheduled Review Overlays */}

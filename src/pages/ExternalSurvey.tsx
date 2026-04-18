@@ -120,54 +120,39 @@ export const ExternalSurvey = () => {
                         <div className="bg-[#141414] p-8 border border-[#262626] rounded-sm space-y-8">
                             <h2 className="text-2xl font-bold border-b border-[#262626] pb-4">Survey Questions</h2>
                             
-                            {/* Quantitative (Likert Scale) */}
-                            <div className="space-y-4">
-                                <p className="font-bold text-[13px] uppercase tracking-wider text-[#999999]">How easy was it to understand the flow?</p>
-                                <div className="flex gap-4">
-                                    {[1,2,3,4,5].map(rating => (
-                                        <button 
-                                           key={rating}
-                                           onClick={() => setResponses({...responses, easeOfUse: rating})}
-                                           className={`w-12 h-12 flex items-center justify-center border font-mono font-bold transition-colors rounded-sm ${
-                                               responses.easeOfUse === rating ? 'bg-[#FF3D00] text-white border-[#FF3D00]' : 'bg-[#0A0A0A] border-[#262626] text-[#999999] hover:border-[#FF3D00] hover:text-white'
-                                           }`}
-                                        >
-                                            {rating}
-                                        </button>
-                                    ))}
-                                </div>
-                                <span className="font-mono text-[10px] text-[#999999] uppercase flex justify-between max-w-[280px]">
-                                    <span>1 - Very Difficult</span>
-                                    <span>5 - Very Easy</span>
-                                </span>
-                            </div>
+                            {review.surveyQuestions && review.surveyQuestions.length > 0 ? (
+                                review.surveyQuestions.map((q: any, i: number) => (
+                                    <div key={i} className="space-y-4">
+                                        <label className="font-bold text-[13px] uppercase tracking-wider text-[#999999] block">{i+1}. {q.q}</label>
+                                        <textarea 
+                                            rows={3}
+                                            value={responses[`q${i}`] || ''}
+                                            onChange={e => setResponses({...responses, [`q${i}`]: e.target.value})}
+                                            className="w-full border border-[#262626] p-4 outline-none focus:border-[#FF3D00] bg-[#0A0A0A] rounded-sm text-sm text-white resize-none"
+                                        />
+                                    </div>
+                                ))
+                            ) : (
+                                <div className="text-[#999999] font-mono text-sm italic">No specific survey questions configured. Please leave general feedback.</div>
+                            )}
 
-                            {/* Qualitative */}
-                            <div className="space-y-4">
-                                <label className="font-bold text-[13px] uppercase tracking-wider text-[#999999] block">What stood out the most to you?</label>
-                                <textarea 
-                                    rows={4}
-                                    value={responses.standout || ''}
-                                    onChange={e => setResponses({...responses, standout: e.target.value})}
-                                    className="w-full border border-[#262626] p-4 outline-none focus:border-[#FF3D00] bg-[#0A0A0A] rounded-sm text-sm text-white resize-none"
-                                />
-                            </div>
-                            
-                            <div className="space-y-4">
-                                <label className="font-bold text-[13px] uppercase tracking-wider text-[#999999] block">Do you have any other comments or suggestions?</label>
-                                <textarea 
-                                    rows={4}
-                                    value={responses.comments || ''}
-                                    onChange={e => setResponses({...responses, comments: e.target.value})}
-                                    className="w-full border border-[#262626] p-4 outline-none focus:border-[#FF3D00] bg-[#0A0A0A] rounded-sm text-sm text-white resize-none"
-                                />
-                            </div>
+                            {!review.surveyQuestions?.length && (
+                                <div className="space-y-4 pt-4">
+                                    <label className="font-bold text-[13px] uppercase tracking-wider text-[#999999] block">Do you have any comments or suggestions?</label>
+                                    <textarea 
+                                        rows={4}
+                                        value={responses.comments || ''}
+                                        onChange={e => setResponses({...responses, comments: e.target.value})}
+                                        className="w-full border border-[#262626] p-4 outline-none focus:border-[#FF3D00] bg-[#0A0A0A] rounded-sm text-sm text-white resize-none"
+                                    />
+                                </div>
+                            )}
 
                             <div className="pt-8 border-t border-[#262626] flex justify-between items-center">
                                 <button onClick={() => setStep('design')} className="uppercase font-mono text-[11px] font-bold tracking-widest text-[#999999] hover:text-white transition-colors">
                                     Back to Design
                                 </button>
-                                <button onClick={handleSubmit} disabled={submitting || !responses.easeOfUse} className="cta-button !w-auto disabled:opacity-50 disabled:cursor-not-allowed rounded-sm">
+                                <button onClick={handleSubmit} disabled={submitting} className="cta-button !w-auto disabled:opacity-50 disabled:cursor-not-allowed rounded-sm">
                                     {submitting ? 'Submitting...' : 'Submit Feedback'}
                                 </button>
                             </div>

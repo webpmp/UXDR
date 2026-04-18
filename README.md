@@ -1,20 +1,84 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+<img src="https://github.com/webpmp/webpmp.github.io/blob/master/uxdr-cover-v1.png" alt="UXDR" style="max-width: 100%;"></a>
 
-# Run and deploy your AI Studio app
+# UX Design Review (UXDR)
 
-This contains everything you need to run your app locally.
+A web application for managing the UX Design Review (UXDR) lifecycle end to end. The system tracks projects across defined design phases, enforces role-based workflows, manages participant availability, and maintains a structured audit trail of decisions and milestones. Recent updates expand project visibility controls, improve user–project associations, and add admin tooling for testing and data seeding.
 
-View your app in AI Studio: https://ai.studio/apps/6078d4bf-2246-40fb-8348-7b37f88beb5c
+## Key Features
 
-## Run Locally
+### Intake & Project Creation
+- Submit new projects with automatic role assignment based on access requirements  
+- Confidential projects are restricted to explicitly assigned users and hidden from global listings  
 
-**Prerequisites:**  Node.js
+### Role-Based Security Layer
+- Access and actions enforced across roles: `Admin`, `Facilitator`, `Reviewer`, `Participant`, `Watcher`, `Guest`  
+- Permissions applied consistently across views, search, and project data  
 
+### User–Project Association Management
+- Admins can assign users to projects directly  
+- Bulk seeding support for fast environment setup and testing  
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+### User Role Switch (Testing Mode)
+- Admin-only control to simulate different user roles within the UI  
+- Enables validation of permissions, visibility, and workflows without separate accounts  
+
+### In-App Task Lists
+- Role-specific task queues tied to workflow responsibilities  
+- Admins assign facilitators  
+- Facilitators manage team composition  
+- Reviewers maintain availability and complete review steps  
+
+### Calendar System
+- Tracks user availability and lifecycle events  
+- Supports organizational holidays  
+- Enforces valid scheduling windows  
+
+### Project Visibility Controls
+- Confidential project names and details hidden from unauthorized users  
+- Applies across listings, search, and dashboards  
+
+### Dashboard & System Pages
+- **Dashboard:** Active projects, recent activity, role-specific priorities  
+- **Projects:** Lifecycle tracking with phases, team members, and milestones  
+- **Calendar:** Availability and scheduled sessions  
+- **User Management:** Active Directory-style user table with roles and assignments  
+- **Settings:** System configuration and environment controls  
+
+### Search Matrix
+- Cross-context search across users and projects  
+- Results filtered by permission scope  
+
+### Improved Data Integrity
+- Fixes duplicate users during seeding  
+- Reliable synchronization between users and project memberships  
+
+### Refined UI Layout
+- Consistent table spacing  
+- Improved readability across key tables:
+  - Active Directory (User Management)
+  - Projects (Lifecycle)
+  - Dashboard (Recent/Active Projects)
+  - Team Members (Project Details)
+
+## Architecture
+
+The application uses a scalable frontend–backend separation:
+
+- **Frontend:** React (Vite + TypeScript)  
+- **Backend:** Firebase (Firestore + Authentication, serverless)
+
+### Key Libraries & Tools
+- React 18  
+- React Router  
+- Tailwind CSS  
+- Lucide React (icons)  
+- Firebase SDK  
+
+## Deployment
+
+To run locally or deploy:
+
+1. Copy `.env.example` to `.env`
+2. Configure environment variables for your Firebase project
+3. Ensure Firestore and Authentication are enabled
+4. Verify security rules align with the role-based permission model

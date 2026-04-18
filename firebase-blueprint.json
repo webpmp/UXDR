@@ -62,9 +62,52 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["reviewId", "projectId", "authorId", "status", "createdAt"]
+    },
+    "ProjectMember": {
+      "title": "Project Member",
+      "description": "Explict relationship between a user and a project",
+      "type": "object",
+      "properties": {
+        "projectId": { "type": "string" },
+        "userId": { "type": "string" },
+        "email": { "type": "string" },
+        "role": { "type": "string" },
+        "source": { "type": "string" },
+        "is_explicit": { "type": "boolean" }
+      },
+      "required": ["projectId", "userId", "email", "role"]
+    },
+    "CalendarSettings": {
+      "title": "Calendar Settings",
+      "description": "Global configuration for the system calendar.",
+      "type": "object",
+      "properties": {
+        "showWeekends": { "type": "boolean" },
+        "workingHoursStart": { "type": "string", "description": "HH:mm format" },
+        "workingHoursEnd": { "type": "string", "description": "HH:mm format" }
+      }
+    },
+    "Holiday": {
+      "title": "Holiday",
+      "description": "A corporate holiday or blocking event.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "description": { "type": "string" }
+      },
+      "required": ["name", "date"]
     }
   },
   "firestore": {
+    "system_settings/calendar": {
+      "schema": { "$ref": "#/entities/CalendarSettings" },
+      "description": "Global calendar configuration."
+    },
+    "holidays/{holidayId}": {
+      "schema": { "$ref": "#/entities/Holiday" },
+      "description": "Stores corporate holidays and blocking events."
+    },
     "users/{userId}": {
       "schema": { "$ref": "#/entities/User" },
       "description": "Stores user profiles with their roles."
@@ -72,6 +115,10 @@
     "projects/{projectId}": {
       "schema": { "$ref": "#/entities/Project" },
       "description": "Stores UXDR projects and their current workflow state."
+    },
+    "project_members/{memberId}": {
+      "schema": { "$ref": "#/entities/ProjectMember" },
+      "description": "Stores explicit project-team memberships."
     },
     "reviews/{reviewId}": {
       "schema": { "$ref": "#/entities/ReviewStage" },

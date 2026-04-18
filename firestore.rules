@@ -2,181 +2,185 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
+    
     // ===============================================================
-    // Assumed Data Model
+    // GLOBAL SAFETY NET - DEFAULT DENY
     // ===============================================================
-    //
-    // Collection: users
-    // Document ID: userId from Auth
-    // Fields:
-    //   - name: string (required) - display name
-    //   - email: string (required) - email address
-    //   - role: string (required) - Admin, Facilitator, Reviewer, Requestor, Participant, Watcher, Guest
-    //   - availability: list (optional) - For reviewers
-    //
-    // Collection: projects
-    // Document ID: auto-generated
-    // Fields:
-    //   - title: string (required)
-    //   - description: string (required)
-    //   - status: string (required) - Workflow state
-    //   - requestorId: string (required) - UID of creator
-    //   - disclosureRequired: bool (required) - Hides from guests if true
-    //   - createdAt: string (required) - timestamp
-    //   - timeline: string (optional)
-    //   - priorWorkLink: string (optional)
-    //
-    // Collection: reviews
-    // Document ID: auto-generated
-    // Fields:
-    //   - projectId: string (required)
-    //   - stageType: string (required)
-    //   - status: string (required)
-    //   - facilitatorId: string (optional)
-    //   - reviewerIds: list (optional)
-    //   - scheduledTime: string (optional)
-    //
-    // Collection: feedback
-    // Document ID: auto-generated
-    // Fields:
-    //   - reviewId: string (required)
-    //   - projectId: string (required)
-    //   - authorId: string (required)
-    //   - screenName: string (optional)
-    //   - notes: string (optional)
-    //   - status: string (required)
-    // ===============================================================
-
-    // ===============================================================
-    // Helper Functions
-    // ===============================================================
-
-    function isAuthenticated() {
-       return request.auth != null;
+    match /{document=**} {
+      allow read, write: if false;
     }
 
-    function isOwner(userId) {
-       return isAuthenticated() && request.auth.uid == userId;
+    // ===============================================================
+    // PRIMITIVE HELPERS
+    // ===============================================================
+    function isAuthenticated() { return request.auth != null; }
+    function isEmailVerified() { return isAuthenticated() && request.auth.token.email_verified == true; }
+    function getEmail() { return request.auth.token.email; }
+    function getUid() { return request.auth.uid; }
+    
+    // Hardcoded Admin identity for bootstrapping and fail-safe access
+    function isHardcodedAdmin() {
+      return isAuthenticated() && (
+        getEmail() == "webpmp@gmail.com" ||
+        getUid() == "A32rRWuWIeTvzO5SDqJxk2j4ePF3"
+      );
     }
 
     function isAdmin() {
-      return isAuthenticated() && 
-        (
-          (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
-           get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'Admin') 
-          || 
-          (request.auth.token.email == "webpmp@gmail.com" && request.auth.token.email_verified == true)
-        );
+      return isHardcodedAdmin() || (
+        isAuthenticated() &&
+        exists(/databases/$(database)/documents/users/$(getUid())) && 
+        get(/databases/$(database)/documents/users/$(getUid())).data.role == "Admin"
+      );
     }
-    
+
+    function isPrivileged() {
+      return isHardcodedAdmin() || isAdmin();
+    }
+
     function getUserRole() {
-      return exists(/databases/$(database)/documents/users/$(request.auth.uid)) 
-        ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role 
+      return exists(/databases/$(database)/documents/users/$(getUid()))
+        ? get(/databases/$(database)/documents/users/$(getUid())).data.role
         : "Guest";
     }
 
-    function isValidRole(role) {
-      return role in ["Admin", "Facilitator", "Reviewer", "Requestor", "Participant", "Watcher", "Guest"];
+    function isFacilitator() {
+      return isAdmin() || getUserRole() == "Facilitator";
     }
 
-    // Role-based validations
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+
+    // ===============================================================
+    // VALIDATION BLUEPRINTS
+    // ===============================================================
+
     function isValidUser(data) {
-       return data.keys().hasAll(['name', 'email', 'role']) &&
-              data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
-              data.email is string && data.email.size() < 100 &&
-              isValidRole(data.role) &&
-              (!('availability' in data) || data.availability is list);
+      return data.keys().hasAll(['name', 'email', 'role']) &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             data.email is string && data.email.size() < 100 &&
+             data.role in ["Admin", "Facilitator", "Reviewer", "Requestor", "Participant", "Watcher", "Guest"] &&
+             (!('availability' in data) || data.availability is list);
     }
 
     function isValidProject(data) {
-       return data.keys().hasAll(['title', 'status', 'requestorId', 'disclosureRequired', 'createdAt']) &&
-              data.title is string && data.title.size() > 0 && data.title.size() < 200 &&
-              data.status in ["Intake", "Discovery", "Design", "Follow-up", "Fit & Finish", "Approved", "Approved-Changes Required"] &&
-              data.requestorId is string && data.requestorId.size() > 0 &&
-              data.disclosureRequired is bool &&
-              (!('description' in data) || (data.description is string && data.description.size() <= 2000)) &&
-              (!('timeline' in data) || (data.timeline is string && data.timeline.size() <= 500)) &&
-              (!('priorWorkLink' in data) || (data.priorWorkLink is string && data.priorWorkLink.size() <= 1000));
-    }
-    
-    function isValidReview(data) {
-      return data.keys().hasAll(['projectId', 'stageType', 'status']) &&
-             data.projectId is string && data.projectId.size() > 0 &&
-             data.stageType in ["Discovery", "Design", "Follow-up", "Fit & Finish"] &&
-             data.status in ["Pending", "Scheduled", "Completed"] &&
-             (!('facilitatorId' in data) || data.facilitatorId is string) &&
-             (!('reviewerIds' in data) || data.reviewerIds is list) &&
-             (!('scheduledTime' in data) || data.scheduledTime is string) &&
-             (!('recordingLink' in data) || (data.recordingLink is string && data.recordingLink.size() <= 1000)) &&
-             (!('externalSurveyLink' in data) || (data.externalSurveyLink is string && data.externalSurveyLink.size() <= 1000));
-    }
-    
-    function isValidFeedback(data) {
-      return data.keys().hasAll(['reviewId', 'projectId', 'authorId', 'status', 'createdAt']) &&
-             data.reviewId is string && data.reviewId.size() > 0 &&
-             data.projectId is string && data.projectId.size() > 0 &&
-             data.authorId is string && data.authorId.size() > 0 &&
-             data.status in ["Open", "Addressed", "Ignored"] &&
-             (!('screenName' in data) || (data.screenName is string && data.screenName.size() <= 200)) &&
-             (!('screenshotUrl' in data) || (data.screenshotUrl is string && data.screenshotUrl.size() <= 1000)) &&
-             (!('notes' in data) || (data.notes is string && data.notes.size() <= 5000));
+      return data.keys().hasAll(['title', 'status', 'requestorId', 'disclosureRequired', 'createdAt']) &&
+             data.title is string && data.title.size() > 1 && data.title.size() < 200 &&
+             data.status in ["Intake", "Discovery", "Design", "Follow-up", "Fit & Finish", "Approved", "Approved-Changes Required"] &&
+             (isAdmin() || data.requestorId == getUid()) &&
+             data.disclosureRequired is bool &&
+             (!('description' in data) || (data.description is string && data.description.size() <= 2000)) &&
+             (!('timeline' in data) || (data.timeline is string && data.timeline.size() <= 500)) &&
+             (!('priorWorkLink' in data) || (data.priorWorkLink is string && data.priorWorkLink.size() <= 1000));
     }
 
+    function isValidReview(data) {
+      return data.keys().hasAll(['projectId', 'stageType', 'status']) &&
+             isValidId(data.projectId) &&
+             data.stageType in ["Discovery", "Design", "Follow-up", "Fit & Finish"] &&
+             data.status in ["Pending", "Scheduled", "Completed", "Approved", "Approved with Revisions", "Not Approved"] &&
+             (data.status != "Scheduled" || ('scheduledTime' in data && data.scheduledTime is string));
+    }
+
+    function isValidFeedback(data) {
+      return data.keys().hasAll(['reviewId', 'projectId', 'authorId', 'status', 'createdAt']) &&
+             isValidId(data.reviewId) &&
+             isValidId(data.projectId) &&
+             data.authorId == getUid() &&
+             data.status in ["Open", "Addressed", "Ignored", "Approved", "Approved with Revisions", "Not Approved"] &&
+             (!('notes' in data) || (data.notes is string && data.notes.size() <= 10000));
+    }
+
+    function isValidMember(data) {
+      return data.keys().hasAll(['projectId', 'userId', 'email', 'role']) &&
+             isValidId(data.projectId) &&
+             isValidId(data.userId) &&
+             data.email is string &&
+             data.role is string;
+    }
+
+    // ===============================================================
+    // COLLECTION RULES
+    // ===============================================================
+
     match /users/{userId} {
-      // Guests can read anyone except wait, user directory should be searchable by guests?
       allow read: if isAuthenticated();
       
-      // Users can create their own profile as Guest/Requestor but not Admin
-      allow create: if isAuthenticated() && isValidUser(request.resource.data) && 
-                    (
-                      (isOwner(userId) && (request.resource.data.role == "Guest" || request.resource.data.role == "Requestor")) ||
-                      isAdmin()
-                    );
+      allow create: if isAuthenticated() && isValidUser(incoming()) && 
+                    ((getUid() == userId && (incoming().role == "Guest" || incoming().role == "Requestor")) || isPrivileged());
                     
-      // Users can update their own data but NOT their role
-      allow update: if isAuthenticated() && isValidUser(request.resource.data) &&
-                    (
-                      (isOwner(userId) && request.resource.data.role == resource.data.role) ||
-                      isAdmin()
-                    );
+      allow update: if isAuthenticated() && isValidUser(incoming()) &&
+                    ((getUid() == userId && incoming().role == existing().role) || isPrivileged());
+
+      allow delete: if isAuthenticated() && isPrivileged();
     }
 
     match /projects/{projectId} {
-      // Admins read all. Others read if not disclosureRequired or if they are involved.
-      allow read: if isAuthenticated() && (
+      allow get: if isAuthenticated() && (
+        isHardcodedAdmin() || 
         isAdmin() || 
+        resource == null ||
         resource.data.disclosureRequired == false ||
-        getUserRole() in ["Admin", "Facilitator", "Reviewer", "Requestor", "Watcher"]
+        resource.data.requestorId == getUid() ||
+        // Relationship lookup
+        exists(/databases/$(database)/documents/project_members/$(getUid() + "_" + projectId))
       );
       
-      allow create: if isAuthenticated() && (getUserRole() in ["Requestor", "Admin", "Facilitator"]) && 
-                    isValidProject(request.resource.data) &&
-                    request.resource.data.requestorId == request.auth.uid;
+      allow list: if isAuthenticated() && (
+        isHardcodedAdmin() || 
+        isAdmin() || 
+        (resource != null && resource.data.disclosureRequired == false) ||
+        (resource != null && resource.data.requestorId == getUid())
+      );
+      
+      allow create: if isAuthenticated() && (isEmailVerified() || isPrivileged()) && isValidProject(incoming()) && (isPrivileged() || getUserRole() in ["Requestor", "Facilitator"]);
                     
-      allow update: if isAuthenticated() && isValidProject(request.resource.data) && (
+      allow update: if isAuthenticated() && isValidProject(incoming()) && (
                       isAdmin() || 
-                      getUserRole() in ["Facilitator"] ||
-                      (isOwner(resource.data.requestorId) && request.resource.data.requestorId == resource.data.requestorId)
+                      getUserRole() == "Facilitator" ||
+                      (existing().requestorId == getUid() && incoming().requestorId == existing().requestorId)
                     );
+
+      allow delete: if isAuthenticated() && isPrivileged();
+    }
+
+    match /project_members/{memberId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAuthenticated() && (isAdmin() || getUserRole() == "Facilitator") && isValidMember(incoming());
+      allow delete: if isAuthenticated() && (isAdmin() || getUserRole() == "Facilitator");
     }
     
     match /reviews/{reviewId} {
       allow read: if isAuthenticated();
-      // Facilitators and Admins can create and schedule
-      allow create, update: if isAuthenticated() && isValidReview(request.resource.data) && (
-        isAdmin() || getUserRole() in ["Facilitator", "Requestor", "Reviewer"]
-      );
+      allow create, update: if isAuthenticated() && isValidReview(incoming()) && (isFacilitator() || getUserRole() in ["Requestor", "Reviewer"]);
       allow delete: if isAdmin();
     }
     
     match /feedback/{feedbackId} {
       allow read: if isAuthenticated();
-      allow create: if isAuthenticated() && isValidFeedback(request.resource.data) && request.resource.data.authorId == request.auth.uid;
-      allow update: if isAuthenticated() && isValidFeedback(request.resource.data) && (
-        isAdmin() || isOwner(resource.data.authorId) || getUserRole() == "Facilitator"
-      );
-      allow delete: if isAdmin() || isOwner(resource.data.authorId);
+      allow create: if isAuthenticated() && isValidFeedback(incoming());
+      allow update: if isAuthenticated() && isValidFeedback(incoming()) && (isAdmin() || existing().authorId == getUid() || getUserRole() == "Facilitator");
+      allow delete: if isAdmin() || existing().authorId == getUid();
+    }
+
+    match /project_history/{historyId} {
+      allow read: if isAuthenticated() && isPrivileged();
+      allow create: if isAuthenticated(); // Application code handles access control for history writes
+      allow update, delete: if false; // History is immutable
+    }
+
+    match /holidays/{holidayId} {
+      allow read: if isAuthenticated();
+      allow create, update, delete: if isAuthenticated() && isPrivileged();
+    }
+
+    match /system_settings/{settingId} {
+      allow read: if isAuthenticated();
+      allow create, update, delete: if isAuthenticated() && isPrivileged();
     }
   }
 }

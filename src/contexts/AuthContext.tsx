@@ -25,6 +25,9 @@ interface AuthContextType {
   loading: boolean;
   signIn: () => Promise<void>;
   signOut: () => Promise<void>;
+  testRole: Role | null;
+  setTestRole: (role: Role | null) => void;
+  originalRole: Role | null;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -33,6 +36,9 @@ const AuthContext = createContext<AuthContextType>({
   loading: true,
   signIn: async () => {},
   signOut: async () => {},
+  testRole: null,
+  setTestRole: () => {},
+  originalRole: null,
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -41,6 +47,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [testRole, setTestRole] = useState<Role | null>(null);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -114,8 +121,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await firebaseSignOut(auth);
   };
 
+  // Compute the effective profile by applying the test role if present
+  const effectiveProfile = profile ? {
+    ...profile,
+    role: testRole || profile.role
+  } : null;
+
   return (
-    <AuthContext.Provider value={{ user, profile, loading, signIn, signOut }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      profile: effectiveProfile, 
+      loading, 
+      signIn, 
+      signOut, 
+      testRole, 
+      setTestRole, 
+      originalRole: profile?.role || null 
+    }}>
       {children}
     </AuthContext.Provider>
   );
