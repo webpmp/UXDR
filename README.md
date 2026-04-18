@@ -52,8 +52,6 @@ A web application for managing the UX Design Review (UXDR) lifecycle end to end.
 
 </table>
 
-</div>
-
 ## Key Features
 
 ### Intake & Project Creation
