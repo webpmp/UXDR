@@ -1,4 +1,4 @@
-<img src="https://github.com/webpmp/webpmp.github.io/blob/master/uxdr-cover-v1.png" alt="UXDR" style="max-width: 100%;"></a>
+<img src="https://github.com/webpmp/webpmp.github.io/blob/master/uxdr-cover-v2.png" alt="UXDR" style="max-width: 100%;"></a>
 
 # UX Design Review (UXDR)
 
