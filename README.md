@@ -6,23 +6,23 @@ A web application for managing the UX Design Review (UXDR) lifecycle end to end.
 
 <table border="0">
   <tr>
-    <td align="center">
+    <td align="center" style="border: none;>
       <img src="https://raw.githubusercontent.com/webpmp/webpmp.github.io/master/dashboard.png" alt="Dashboard" width="150"><br>
       <sub>Dashboard</sub>
     </td>
-    <td align="center">
+    <td align="center" style="border: none;>
       <img src="https://raw.githubusercontent.com/webpmp/webpmp.github.io/master/calendar.png" alt="Calendar" width="150"><br>
       <sub>Calendar</sub>
     </td>
-    <td align="center">
+    <td align="center" style="border: none;>
       <img src="https://raw.githubusercontent.com/webpmp/webpmp.github.io/master/projects.png" alt="Projects" width="150"><br>
       <sub>Projects</sub>
     </td>
-    <td align="center">
+    <td align="center" style="border: none;>
       <img src="https://raw.githubusercontent.com/webpmp/webpmp.github.io/master/user-management.png" alt="User Management" width="150"><br>
       <sub>User Management</sub>
     </td>
-    <td align="center">
+    <td align="center" style="border: none;>
       <img src="https://raw.githubusercontent.com/webpmp/webpmp.github.io/master/settings.png" alt="System Settings" width="150"><br>
       <sub>System Settings</sub>
     </td>
