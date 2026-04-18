@@ -1,13 +1,58 @@
 <img src="https://github.com/webpmp/webpmp.github.io/blob/master/uxdr-cover-v2.png" alt="UXDR" style="max-width: 100%;"></a>
-<img src="https://github.com/webpmp/webpmp.github.io/blob/master/dashboard.png" alt="Dashboard" style="width: 20%;"></a>
-<img src="https://github.com/webpmp/webpmp.github.io/blob/master/calendar.png" alt="Calendar" style="width: 20%;"></a>
-<img src="https://github.com/webpmp/webpmp.github.io/blob/master/projects.png" alt="Projects" style="width: 20%;"></a>
-<img src="https://github.com/webpmp/webpmp.github.io/blob/master/user-management.png" alt="User Management" style="width: 20%;"></a>
-<img src="https://github.com/webpmp/webpmp.github.io/blob/master/settings.png" alt="System Settings" style="width: 20%;"></a>
 
 # UX Design Review (UXDR)
 
 A web application for managing the UX Design Review (UXDR) lifecycle end to end. The system tracks projects across defined design phases, enforces role-based workflows, manages participant availability, and maintains a structured audit trail of decisions and milestones. Recent updates expand project visibility controls, improve user–project associations, and add admin tooling for testing and data seeding.
+
+<!-- Dashboard -->
+
+<figure>
+
+  <img src="https://github.com/webpmp/webpmp.github.io/blob/master/dashboard.png" alt="Dashboard" style="width:20%;">
+
+  <figcaption>Dashboard</figcaption>
+
+</figure>
+
+<!-- Calendar -->
+
+<figure>
+
+  <img src="https://github.com/webpmp/webpmp.github.io/blob/master/calendar.png" alt="Calendar" style="width:20%;">
+
+  <figcaption>Calendar</figcaption>
+
+</figure>
+
+<!-- Projects -->
+
+<figure>
+
+  <img src="https://github.com/webpmp/webpmp.github.io/blob/master/projects.png" alt="Projects" style="width:20%;">
+
+  <figcaption>Projects</figcaption>
+
+</figure>
+
+<!-- User Management -->
+
+<figure>
+
+  <img src="https://github.com/webpmp/webpmp.github.io/blob/master/user-management.png" alt="User Management" style="width:20%;">
+
+  <figcaption>User Management</figcaption>
+
+</figure>
+
+<!-- System Settings -->
+
+<figure>
+
+  <img src="https://github.com/webpmp/webpmp.github.io/blob/master/settings.png" alt="System Settings" style="width:20%;">
+
+  <figcaption>System Settings</figcaption>
+
+</figure>
 
 ## Key Features
 
