@@ -32,6 +32,43 @@ export const CalendarPage = () => {
     const endHr = parseInt(calendarSettings.workingHoursEnd?.split(':')[0] || '18');
     const hours = Array.from({ length: Math.max(1, endHr - startHr + 1) }, (_, i) => i + startHr);
 
+    const [busyBlocks, setBusyBlocks] = useState<{start: string, end: string}[]>([]);
+
+    useEffect(() => {
+        if (!profile?.calendarConnection) return;
+        const fetchFreeBusy = async () => {
+            try {
+                // Fetch next 4 weeks of free-busy data
+                const s = new Date();
+                s.setHours(0,0,0,0);
+                const e = addDays(s, 28);
+                
+                const res = await fetch('/api/calendar/free-busy', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        provider: profile.calendarConnection.provider,
+                        accessToken: profile.calendarConnection.accessToken,
+                        refreshToken: profile.calendarConnection.refreshToken,
+                        timeMin: s.toISOString(),
+                        timeMax: e.toISOString()
+                    })
+                });
+                const data = await res.json();
+                if (data.success && data.busyBlocks) {
+                    setBusyBlocks(data.busyBlocks);
+                } else if (data.error && data.error.includes('expired')) {
+                    // Update user connection state to mark as error/expired
+                    const newConn = { ...profile.calendarConnection, status: 'error' };
+                    await updateDoc(doc(db, 'users', user!.uid), { calendarConnection: newConn });
+                }
+            } catch (err) {
+                console.error("Free-busy fetch error:", err);
+            }
+        };
+        fetchFreeBusy();
+    }, [profile?.calendarConnection, user]);
+
     useEffect(() => {
         if (!profile || !user) return;
         
@@ -210,13 +247,37 @@ export const CalendarPage = () => {
     const getBlockStatus = (dateStr: string, hour: number) => {
         // Check Corporate Holidays first
         const isHoliday = holidays.some(h => h.date === dateStr);
+        // If holiday, always unavailable
         if (isHoliday) return false;
 
+        // Check if there is an explicit user availability block set in UXDR
         const block = availability.find(a => a.date === dateStr && a.hour === hour);
-        if (block) return block.available;
-        const d = parseISO(dateStr);
-        const isWeekend = d.getDay() === 0 || d.getDay() === 6;
-        return !isWeekend; // Default assumed true for weekdays
+        let uxdrAvailable = true;
+        if (block) {
+            uxdrAvailable = block.available;
+        } else {
+            const d = parseISO(dateStr);
+            const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+            uxdrAvailable = !isWeekend; // Default assumed true for weekdays
+        }
+
+        if (!uxdrAvailable) return false;
+
+        // If explicitly available in UXDR, check external free/busy overrides
+        const cellStartStr = `${dateStr}T${hour.toString().padStart(2, '0')}:00:00`;
+        const cellStartDate = new Date(cellStartStr);
+        const cellEndDate = new Date(cellStartStr);
+        cellEndDate.setHours(cellEndDate.getHours() + 1);
+
+        const isBusy = busyBlocks.some(b => {
+            const bStart = new Date(b.start);
+            const bEnd = new Date(b.end);
+            return (bStart < cellEndDate && bEnd > cellStartDate);
+        });
+
+        if (isBusy) return false;
+
+        return true;
     };
 
     // Scheduled reviews in this week
@@ -231,7 +292,54 @@ export const CalendarPage = () => {
             <header className="flex justify-between items-end border-b border-[#262626] pb-6">
                 <div>
                    <h1 className="mb-2">Availability & Schedule</h1>
-                   <p className="text-[#999999] text-sm">Manage system availability and view scheduled reviews.</p>
+                   <div className="flex items-center gap-4">
+                       <p className="text-[#999999] text-sm">Manage system availability and view scheduled reviews.</p>
+                       {/* Sync Status Indicator */}
+                       {(() => {
+                           if (!profile?.calendarConnection) {
+                               return (
+                                   <div className="flex items-center gap-2">
+                                       <span className="text-[#999999] text-xs">! Calendar not connected</span>
+                                   </div>
+                               );
+                           }
+
+                           if (profile.calendarConnection.status === 'error') {
+                               return (
+                                   <div className="flex items-center gap-2 bg-[#FF3D00] px-3 py-1 rounded-sm cursor-pointer hover:opacity-80 transition-opacity" onClick={() => navigate('/settings')}>
+                                       <span className="text-white font-mono text-xs tracking-wider">
+                                           ! Sync error (Token Expired) - Reconnect
+                                       </span>
+                                   </div>
+                               );
+                           }
+
+                           // Look at jobs collection locally synced via user profile map, if any are pending
+                           const syncMap = profile.calendarSyncMap || {};
+                           const isSyncing = Object.values(syncMap).some((job: any) => job.status === 'pending');
+
+                           if (isSyncing) {
+                               return (
+                                   <div className="flex items-center gap-2 bg-[#1A1A1A] px-3 py-1 rounded-sm border border-[#333333]">
+                                       <div className="w-2 h-2 rounded-full bg-[#FFB300] animate-pulse"></div>
+                                       <span className="text-[10px] text-[#FFB300] font-mono tracking-wider">
+                                           ⟳ Syncing calendar...
+                                       </span>
+                                   </div>
+                               );
+                           }
+
+                           const providerName = profile.calendarConnection.provider === 'google' ? 'Google Calendar' : 'Outlook Calendar';
+                           return (
+                               <div className="flex items-center gap-2 bg-[#1A1A1A] px-3 py-1 rounded-sm border border-[#333333]">
+                                   <div className="w-2 h-2 rounded-full bg-[#00E676]"></div>
+                                   <span className="text-[10px] text-[#00E676] font-mono tracking-wider">
+                                       ✓ Synced with {providerName}
+                                   </span>
+                               </div>
+                           );
+                       })()}
+                   </div>
                 </div>
                 <div className="flex gap-3">
                     <button onClick={copyPreviousWeek} className="border border-[#262626] text-[#999999] bg-[#141414] px-4 py-3 font-bold uppercase text-[11px] tracking-wider flex items-center gap-2 hover:text-white transition-colors rounded-sm">

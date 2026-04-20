@@ -182,5 +182,12 @@ service cloud.firestore {
       allow read: if isAuthenticated();
       allow create, update, delete: if isAuthenticated() && isPrivileged();
     }
+
+    match /calendar_sync_jobs/{jobId} {
+      allow read: if isAuthenticated() && resource.data.userId == getUid();
+      allow create: if isAuthenticated() && request.resource.data.userId == getUid();
+      allow update: if isAuthenticated() && resource.data.userId == getUid() && request.resource.data.userId == getUid();
+      allow delete: if isAuthenticated() && resource.data.userId == getUid();
+    }
   }
 }

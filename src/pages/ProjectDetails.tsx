@@ -171,7 +171,7 @@ export const ProjectDetails = () => {
                     if (profile.role === 'Admin') {
                         const hq = query(collection(db, 'project_history'), where('projectId', '==', id));
                         const hSnap = await getDocs(hq);
-                        const hData = hSnap.docs.map(d => ({id: d.id, ...d.data()}));
+                        const hData: any[] = hSnap.docs.map(d => ({id: d.id, ...d.data()}));
                         
                         hData.push({
                             id: 'genesis-creation',

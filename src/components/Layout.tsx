@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { Navigate, Outlet, Link, useLocation } from 'react-router-dom';
 import { LogOut, LayoutDashboard, Calendar, Search, Users, Shield, Briefcase, FileText, ChevronUp, RotateCcw } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { BackgroundSyncWorker } from './BackgroundSyncWorker';
 
 export const Layout = () => {
   const { user, profile, loading, signOut, testRole, setTestRole, originalRole } = useAuth();
@@ -36,7 +37,7 @@ export const Layout = () => {
     { to: "/calendar", label: "Calendar", icon: Calendar, roles: ["Admin", "Facilitator", "Reviewer", "Requestor", "Watcher", "Participant", "Guest"] },
     { to: "/projects", label: "Projects", icon: Briefcase, roles: ["Requestor", "Facilitator", "Participant", "Reviewer", "Watcher", "Admin"] },
     { to: "/users", label: "User Management", icon: Users, roles: ["Admin"] },
-    { to: "/settings", label: "Settings", icon: Shield, roles: ["Admin"] },
+    { to: "/settings", label: "Settings", icon: Shield, roles: ["Admin", "Facilitator", "Reviewer", "Requestor", "Watcher", "Participant", "Guest"] },
   ];
 
   const filteredLinks = links.filter(link => link.roles.includes(role));
@@ -144,6 +145,7 @@ export const Layout = () => {
 
       {/* Main Content */}
       <main className="flex-1 overflow-auto bg-[#0A0A0A]">
+        <BackgroundSyncWorker />
         <Outlet />
       </main>
     </div>

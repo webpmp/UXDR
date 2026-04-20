@@ -490,9 +490,57 @@ export const Settings = () => {
         }
     };
 
-    if (profile?.role !== 'Admin') {
-        return <div className="p-8 font-mono text-red-500 flex items-center gap-2"><ShieldAlert /> Access Denied. Admin only.</div>;
-    }
+    useEffect(() => {
+        const handleMessage = (event: MessageEvent) => {
+            if (event.data?.type === 'CALENDAR_AUTH_SUCCESS' && user) {
+                const payload = event.data.payload;
+                updateDoc(doc(db, 'users', user.uid), {
+                    calendarConnection: payload
+                }).then(() => {
+                    alert('Calendar connected successfully! Page will refresh.');
+                    window.location.reload();
+                });
+            }
+        };
+        window.addEventListener('message', handleMessage);
+        return () => window.removeEventListener('message', handleMessage);
+    }, [user]);
+
+    const handleConnectGoogle = async () => {
+        try {
+            const res = await fetch('/api/calendar/auth/google/url');
+            const data = await res.json();
+            window.open(data.url, 'google_auth', 'width=600,height=700');
+        } catch (e) {
+            console.error(e);
+            alert("Backend server unreachable.");
+        }
+    };
+
+    const handleConnectOutlook = async () => {
+        try {
+            const res = await fetch('/api/calendar/auth/outlook/url');
+            const data = await res.json();
+            window.open(data.url, 'outlook_auth', 'width=600,height=700');
+        } catch (e) {
+            console.error(e);
+            alert("Backend server unreachable.");
+        }
+    };
+
+    const handleDisconnectCalendar = async () => {
+        if (!user) return;
+        try {
+            await updateDoc(doc(db, 'users', user.uid), { calendarConnection: null });
+            alert('Calendar disconnected.');
+            window.location.reload();
+        } catch (err) {
+            handleFirestoreError(err, OperationType.UPDATE, `users/${user.uid}`);
+        }
+    };
+
+    const isAdmin = profile?.role === 'Admin';
+    const calConn = profile?.calendarConnection;
 
     return (
         <div className="p-8 max-w-6xl mx-auto space-y-12">
@@ -502,9 +550,79 @@ export const Settings = () => {
 
             <header className="border-b border-[#262626] pb-6">
                 <h1 className="mb-2">System Settings</h1>
-                <p className="text-[#999999] text-sm">Global database maintenance and administrative tools.</p>
+                <p className="text-[#999999] text-sm">Personal preferences & administrative controls.</p>
             </header>
 
+            {/* Personal Integrations - Available to all users */}
+            <div className="bg-[#141414] border border-[#262626] p-8 rounded-sm space-y-6">
+                <h3 className="text-xl font-bold flex items-center gap-2 text-white">
+                    <Calendar className="w-6 h-6 text-[#FF3D00]" /> Personal Calendar Integration
+                </h3>
+                <p className="text-[#999999] text-sm max-w-3xl">
+                    Connect an external calendar to automatically sync UXDR reviews you are explicitly assigned to.
+                </p>
+
+                <div className="p-6 bg-[#0A0A0A] border border-[#262626] rounded-sm flex items-center justify-between">
+                    <div>
+                        <p className="text-sm font-bold text-white mb-2">Connection Status</p>
+                        {calConn ? (
+                            calConn.status === 'error' ? (
+                                <div className="flex flex-col gap-1">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-2 h-2 rounded-full bg-[#FF3D00]"></div>
+                                        <span className="text-[#FF3D00] font-mono text-xs uppercase tracking-wider">
+                                            Sync Error / Token Expired
+                                        </span>
+                                    </div>
+                                    <span className="text-[10px] text-[#999999]">Please disconnect and reconnect your provider.</span>
+                                </div>
+                            ) : (
+                                <div className="flex items-center gap-2">
+                                    <div className="w-2 h-2 rounded-full bg-[#00E676] animate-pulse"></div>
+                                    <span className="text-[#00E676] font-mono text-xs uppercase tracking-wider">
+                                        Connected to {calConn.provider}
+                                    </span>
+                                </div>
+                            )
+                        ) : (
+                            <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 rounded-full bg-[#666666]"></div>
+                                <span className="text-[#999999] font-mono text-xs uppercase tracking-wider">
+                                    Not connected
+                                </span>
+                            </div>
+                        )}
+                    </div>
+                    <div>
+                        {calConn ? (
+                            <button 
+                                onClick={handleDisconnectCalendar}
+                                className="bg-[#262626] hover:bg-[#333333] text-white px-6 py-3 text-[11px] font-bold uppercase tracking-widest rounded-sm transition-colors"
+                            >
+                                Disconnect
+                            </button>
+                        ) : (
+                            <div className="flex gap-4">
+                                <button 
+                                    onClick={handleConnectGoogle}
+                                    className="bg-white text-black hover:opacity-80 px-6 py-3 text-[11px] font-bold uppercase tracking-widest rounded-sm transition-opacity"
+                                >
+                                    Connect Google
+                                </button>
+                                <button 
+                                    onClick={handleConnectOutlook}
+                                    className="bg-[#0078D4] text-white hover:opacity-80 px-6 py-3 text-[11px] font-bold uppercase tracking-widest rounded-sm transition-opacity"
+                                >
+                                    Connect Outlook
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            {isAdmin && (
+                <>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="bg-[#141414] border border-[#262626] p-6 rounded-sm">
                     <div className="text-[10px] text-[#999999] uppercase font-bold mb-1">Total Users</div>
@@ -704,6 +822,8 @@ export const Settings = () => {
                     </button>
                 </div>
             </div>
+            </>
+            )}
         </div>
     );
 };
