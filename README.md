@@ -55,7 +55,8 @@ A web application for managing the UX Design Review (UXDR) lifecycle end to end.
 - Reviewers maintain availability and complete review steps  
 
 ### Calendar System
-- Tracks user availability and lifecycle events 
+- Tracks user availability for scheduling UX design review work  
+- Tracks scheduled UX design review events across defined review stages: Discovery, Design, Follow-up Review, and Fit & Finish Review  
 - Supports synchronization with Google Calendar and Outlook Calendar for importing availability data  
 - Supports organizational holidays  
 - Enforces valid scheduling windows  
