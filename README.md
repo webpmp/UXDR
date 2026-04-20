@@ -23,8 +23,8 @@ A web application for managing the UX Design Review (UXDR) lifecycle end to end.
       <strong>User Management</strong>
     </td>
     <td align="center">
-      <img src="https://github.com/webpmp/webpmp.github.io/blob/master/uxdr-settings.png" alt="System Settings" width="150" height="129"><br>
-      <strong>System Settings</strong>
+      <img src="https://github.com/webpmp/webpmp.github.io/blob/master/uxdr-settings.png" alt="Settings" width="150" height="129"><br>
+      <strong>Settings</strong>
     </td>
   </tr>
 </table>
